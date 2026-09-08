@@ -1,0 +1,123 @@
+.bookslot-page h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.bookslot-subtitle {
+  color: var(--color-text-muted);
+  font-size: 14.5px;
+  margin: 0 0 28px;
+}
+
+.bookslot-form {
+  max-width: 520px;
+  background: var(--color-white);
+  border: 1px solid var(--color-green-border);
+  border-radius: var(--radius-card);
+  padding: 28px;
+}
+
+.bookslot-field {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.bookslot-field > span {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 8px;
+}
+
+.bookslot-field select,
+.bookslot-field input[type="date"] {
+  width: 100%;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: 14.5px;
+  background: var(--color-white);
+}
+
+.bookslot-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.slot-chip {
+  border: 1px solid var(--color-border-input);
+  background: var(--color-white);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+}
+
+.slot-chip:hover {
+  border-color: var(--color-green-mid);
+}
+
+.slot-chip--active {
+  background: var(--color-green-dark);
+  border-color: var(--color-green-dark);
+  color: #fff;
+}
+
+.bookslot-error {
+  color: #b3261e;
+  font-size: 13px;
+  margin: -8px 0 16px;
+}
+
+.bookslot-submit {
+  width: 100%;
+  background: var(--color-blue-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.bookslot-submit:hover {
+  background: var(--color-blue-primary-hover);
+}
+
+.bookslot-confirmation {
+  max-width: 480px;
+  background: var(--color-white);
+  border: 1px solid var(--color-green-border);
+  border-radius: var(--radius-card);
+  padding: 36px 32px;
+  text-align: center;
+}
+
+.bookslot-confirm-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-green-highlight);
+  color: var(--color-green-dark);
+  font-size: 24px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.bookslot-confirmation h1 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+
+.bookslot-confirmation p {
+  color: var(--color-text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+  margin: 0 0 24px;
+}

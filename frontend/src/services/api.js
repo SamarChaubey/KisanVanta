@@ -1,7 +1,8 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const NODE_API_BASE_URL = import.meta.env.VITE_NODE_API_BASE_URL || 'http://localhost:3001';
 
-async function request(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+async function request(path, options = {}, baseUrl = API_BASE_URL) {
+  const response = await fetch(`${baseUrl}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
@@ -18,7 +19,7 @@ export function createSlotRequest(slotRequest) {
   return request('/api/slot-requests', {
     method: 'POST',
     body: JSON.stringify(slotRequest),
-  });
+  }, NODE_API_BASE_URL);
 }
 
 export function acceptAlternative(requestId, time) {

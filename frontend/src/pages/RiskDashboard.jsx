@@ -90,9 +90,9 @@ function RiskDashboard() {
       <header className="risk-header">
         <div>
           <p className="eyebrow">KisanVanta operations</p>
-          <h2>Procurement risk radar</h2>
+          <h2>Procurement risk overview</h2>
           <p className="risk-subtitle">
-            Current database status and forecast pressure, refreshed every minute.
+            Current centre status and forecast pressure. Refreshes automatically.
           </p>
         </div>
         <div className="mode-switch" role="group" aria-label="Dashboard mode">

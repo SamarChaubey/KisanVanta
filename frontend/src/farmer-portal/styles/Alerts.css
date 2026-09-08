@@ -1,0 +1,117 @@
+.alerts-page h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 4px 0 8px;
+}
+
+.alerts-subtitle {
+  color: var(--color-text-muted);
+  font-size: 14.5px;
+  margin: 0 0 28px;
+}
+
+.alerts-empty {
+  max-width: 520px;
+  background: var(--color-white);
+  border: 1px solid var(--color-green-border);
+  border-radius: var(--radius-md);
+  padding: 24px;
+  color: var(--color-text-muted);
+  font-size: 14.5px;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 620px;
+}
+
+.alert-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  padding: 16px 16px 16px 14px;
+}
+
+.alert-item--info {
+  border-left-color: var(--color-blue-primary);
+}
+
+.alert-item--warning {
+  border-left-color: #d98c1f;
+}
+
+.alert-item--success {
+  border-left-color: var(--color-green-mid);
+}
+
+.alert-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-green-pale-bg);
+  color: var(--color-green-dark);
+}
+
+.alert-item--info .alert-icon {
+  color: var(--color-blue-primary);
+  background: #eaf4fb;
+}
+
+.alert-item--warning .alert-icon {
+  color: #a3660f;
+  background: #fdf3e3;
+}
+
+.alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.alert-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.alert-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14.5px;
+}
+
+.alert-time {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.alert-message {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.alert-dismiss {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.alert-dismiss:hover {
+  background: var(--color-page-bg);
+  color: var(--color-text-primary);
+}
