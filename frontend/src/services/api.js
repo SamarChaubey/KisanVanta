@@ -27,3 +27,16 @@ export function acceptAlternative(requestId, time) {
     body: JSON.stringify(time),
   });
 }
+
+export function getCentreRisks() {
+  return request('/centres/risk');
+}
+
+export function getCentreRisk(centreId) {
+  return request(`/centres/${centreId}/risk`);
+}
+
+export function getRiskHistory(centreId) {
+  const query = centreId ? `?centreId=${encodeURIComponent(centreId)}` : '';
+  return request(`/centres/risk/history${query}`);
+}
