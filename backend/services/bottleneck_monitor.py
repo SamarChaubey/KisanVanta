@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 from database import get_collection
 from services.centre_status_service import recompute_centre_status
+from services.risk_assessor import assess_risk_with_llm
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +55,46 @@ def _bottlenecks_for_centre(centre, status):
     return bottlenecks
 
 
+def risk_assessment(centre, status):
+    processing_rate = status.get('processingRate', 0)
+    farmers_waiting = status.get('farmersWaiting', 0)
+    storage_capacity = status.get('storageCapacity', 0)
+    storage_used = status.get('storageUsed', 0)
+    lifting_rate = status.get('liftingRate', 0)
+    queue_hours = farmers_waiting / processing_rate if processing_rate else None
+    storage_utilization = storage_used / storage_capacity if storage_capacity else None
+    lifting_gap = max(processing_rate - lifting_rate, 0)
+
+    score = 0
+    if queue_hours is not None:
+        score += min(queue_hours / 6, 1) * 45
+    if storage_utilization is not None:
+        score += min(storage_utilization, 1) * 35
+    if processing_rate:
+        score += min(lifting_gap / processing_rate, 1) * 20
+    score = round(min(score, 100), 1)
+
+    return {
+        'riskScore': score,
+        'riskLevel': 'high' if score >= 70 else 'medium' if score >= 35 else 'low',
+        'queueHours': round(queue_hours, 2) if queue_hours is not None else None,
+        'storageUtilization': round(storage_utilization * 100, 1)
+        if storage_utilization is not None else None,
+        'liftingGap': lifting_gap,
+        'bottleneckTypes': [item['type'] for item in _bottlenecks_for_centre(centre, status)],
+    }
+
+
+def _request_counts(centre_id):
+    counts = {}
+    for status in ('received', 'alternative_suggested', 'unavailable', 'confirmed', 'closed', 'completed'):
+        counts[status] = get_collection('slot_requests').count_documents({
+            'centreId': centre_id,
+            'status': status,
+        })
+    return counts
+
+
 def monitor_centres():
     centres = get_collection('procurement_centres').find({'status': 'open'})
     notifications = get_collection('notifications')
@@ -63,6 +104,35 @@ def monitor_centres():
         recompute_centre_status(centre['_id'])
         status = get_collection('centre_status').find_one({'centreId': centre['_id']}) or {}
         bottlenecks = _bottlenecks_for_centre(centre, status)
+        available_slots = list(get_collection('booking_slots').find({
+            'centreId': centre['_id'],
+            'status': 'available',
+            '$expr': {'$lt': ['$booked', '$capacity']},
+        }).limit(20))
+        recent_history = list(get_collection('risk_snapshots').find(
+            {'centreId': centre['_id']},
+            {
+                'riskScore': 1,
+                'queueHours': 1,
+                'storageUtilization': 1,
+                'createdAt': 1,
+            },
+        ).sort('createdAt', -1).limit(12))
+        assessment = assess_risk_with_llm(
+            centre,
+            status,
+            available_slots,
+            _request_counts(centre['_id']),
+            bottlenecks,
+            recent_history,
+        )
+        snapshots = get_collection('risk_snapshots')
+        snapshots.insert_one({
+            'centreId': centre['_id'],
+            'centreName': centre['name'],
+            **assessment,
+            'createdAt': now,
+        })
         active_types = {item['type'] for item in bottlenecks}
 
         notifications.update_many(

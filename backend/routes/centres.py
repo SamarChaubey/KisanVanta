@@ -6,6 +6,7 @@ from pymongo import ReturnDocument
 from typing import Literal
 
 from database import get_collection
+from services.bottleneck_monitor import risk_assessment
 
 router = APIRouter()
 
@@ -66,6 +67,67 @@ def list_centres():
     for c in centres:
         c['_id'] = str(c['_id'])
     return centres
+
+
+def _risk_snapshot(snapshot):
+    snapshot = dict(snapshot)
+    for key in ('_id', 'centreId'):
+        if key in snapshot:
+            snapshot[key] = str(snapshot[key])
+    if 'createdAt' in snapshot:
+        snapshot['createdAt'] = snapshot['createdAt'].isoformat()
+    return snapshot
+
+
+def _latest_risk(centre):
+    status = get_collection('centre_status').find_one({'centreId': centre['_id']}) or {}
+    snapshot = get_collection('risk_snapshots').find_one(
+        {'centreId': centre['_id']},
+        sort=[('createdAt', -1)],
+    )
+    if snapshot:
+        return {
+            key: value for key, value in _risk_snapshot(snapshot).items()
+            if key != '_id'
+        }
+    return risk_assessment(centre, status)
+
+
+@router.get('/risk')
+def list_centre_risks():
+    centres = list(get_collection('procurement_centres').find({'status': 'open'}))
+    result = []
+    for centre in centres:
+        result.append({
+            'centreId': str(centre['_id']),
+            'centreName': centre['name'],
+            **_latest_risk(centre),
+        })
+    return result
+
+
+@router.get('/risk/history')
+def list_risk_history(centreId: str | None = None, limit: int = 100):
+    query = {}
+    if centreId:
+        query['centreId'] = _object_id(centreId)
+    snapshots = get_collection('risk_snapshots').find(query).sort('createdAt', -1).limit(
+        min(max(limit, 1), 500),
+    )
+    return [_risk_snapshot(snapshot) for snapshot in snapshots]
+
+
+@router.get('/{centre_id}/risk')
+def get_centre_risk(centre_id: str):
+    oid = _object_id(centre_id)
+    centre = get_collection('procurement_centres').find_one({'_id': oid, 'status': 'open'})
+    if not centre:
+        raise HTTPException(status_code=404, detail='Centre not found')
+    return {
+        'centreId': centre_id,
+        'centreName': centre['name'],
+        **_latest_risk(centre),
+    }
 
 
 @router.get('/notifications')

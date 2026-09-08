@@ -15,6 +15,7 @@ COLLECTIONS = [
     "simulations",
     "financial_exposure",
     "notifications",
+    "risk_snapshots",
 ]
 
 
