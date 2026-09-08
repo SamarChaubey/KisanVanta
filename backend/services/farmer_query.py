@@ -2,6 +2,7 @@ from bson import ObjectId
 from bson.errors import InvalidId
 
 from database import get_collection
+from services.operational_context import gather_farmer_operational_context
 from services.ollama_client import generate_answer
 
 
@@ -24,6 +25,8 @@ def _gather_context(farmer_id_str):
     financial_exposure = list(get_collection('financial_exposure').find({'farmerId': oid}))
 
     centre_ids = {sr['centreId'] for sr in slot_requests} | {pr['centreId'] for pr in procurement_records}
+    if farmer.get('centreId'):
+        centre_ids.add(farmer['centreId'])
     centres = {c['_id']: c for c in get_collection('procurement_centres').find({'_id': {'$in': list(centre_ids)}})}
 
     lines = [f"Farmer: {farmer['name']}, phone {farmer['phone']}"]
@@ -56,6 +59,10 @@ def _gather_context(farmer_id_str):
     if len(lines) == 1:
         lines.append("No slot requests or procurement records found for this farmer yet.")
 
+    lines.append(
+        'Live centre operations, available slots, active bottlenecks, and alerts:\n'
+        f'{gather_farmer_operational_context(centre_ids)}'
+    )
     return "\n".join(lines)
 
 
@@ -70,6 +77,8 @@ def answer_farmer_query(farmer_id_str, question, language='en'):
         "You are an assistant helping an Indian farmer understand their crop procurement status. "
         "Answer clearly and simply using only the facts given below. "
         "Do not invent numbers or slots not present in the data. "
+        "When asked for the best slot, recommend only an available slot from the live data, "
+        "mention active bottlenecks, and explain uncertainty instead of promising an outcome. "
         f"{language_instruction}\n\n"
         f"Farmer data:\n{context}\n\n"
         f"Farmer's question: {question}\n\n"

@@ -28,6 +28,10 @@ class QualityUpdate(BaseModel):
     actualValue: float | None = None
 
 
+class CompletionUpdate(BaseModel):
+    actualValue: float | None = None
+
+
 def _object_id(value):
     try:
         return ObjectId(value)
@@ -69,3 +73,40 @@ def update_procurement_status(record_id: str, update: QualityUpdate):
     recompute_centre_status(record['centreId'])
 
     return {'status': 'updated', 'recordId': record_id, 'newStatus': update.status}
+
+
+@router.patch('/{record_id}/complete')
+def complete_procurement(record_id: str, update: CompletionUpdate):
+    oid = _object_id(record_id)
+    records = get_collection('procurement_records')
+    record = records.find_one({'_id': oid})
+    if not record:
+        raise HTTPException(status_code=404, detail='Procurement record not found')
+    if record['status'] == 'completed':
+        return {
+            'status': 'completed',
+            'recordId': record_id,
+            'message': 'Procurement is already complete',
+        }
+    if record['status'] not in {'accepted', 'downgraded'}:
+        raise HTTPException(
+            status_code=409,
+            detail='Only accepted or downgraded procurements can be completed',
+        )
+
+    now = datetime.now(timezone.utc)
+    set_fields = {'status': 'completed', 'updatedAt': now, 'completedAt': now}
+    if update.actualValue is not None:
+        set_fields['actualValue'] = update.actualValue
+    records.update_one({'_id': oid}, {'$set': set_fields})
+
+    get_collection('slot_requests').update_one(
+        {'_id': record['slotRequestId']},
+        {'$set': {'status': 'completed', 'updatedAt': now}},
+    )
+    recompute_centre_status(record['centreId'])
+    return {
+        'status': 'completed',
+        'recordId': record_id,
+        'actualValue': update.actualValue,
+    }

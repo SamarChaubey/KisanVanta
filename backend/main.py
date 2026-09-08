@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from routes import centres, procurement, slot_requests, farmers
+from routes import admin, centres, procurement, slot_requests, farmers
 from services.bottleneck_monitor import run_bottleneck_monitor
 
 
@@ -30,6 +30,7 @@ app.include_router(slot_requests.router, prefix='/api/slot-requests', tags=['slo
 app.include_router(procurement.router, prefix='/procurement', tags=['procurement'])
 app.include_router(centres.router, prefix='/centres', tags=['centres'])
 app.include_router(farmers.router, prefix='/farmers', tags=['farmers'])
+app.include_router(admin.router, prefix='/admin', tags=['admin assistant'])
 
 
 @app.get('/health')

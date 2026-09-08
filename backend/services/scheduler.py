@@ -135,6 +135,13 @@ def schedule_slot(request, request_id):
         return {'status': 'confirmed', 'slot': booking['slot']}
 
     if not available_slots:
+        get_collection('slot_requests').update_one(
+            {'_id': request_id},
+            {'$set': {
+                'status': 'unavailable',
+                'updatedAt': datetime.now(timezone.utc),
+            }},
+        )
         return {
             'status': 'unavailable',
             'message': 'No suitable procurement slots are available.',
@@ -152,6 +159,7 @@ def schedule_slot(request, request_id):
                 'date': suggested_slot['date'],
                 'time': suggested_slot['time'],
             },
+            'updatedAt': datetime.now(timezone.utc),
         }},
     )
     return {
@@ -190,6 +198,55 @@ def accept_alternative(request, suggested_slot):
     _create_procurement_record(request, request_id, centre, farmer_id)
     recompute_centre_status(centre_id)
     return {'status': 'confirmed', 'slot': booking['slot']}
+
+
+def confirm_slot_request(request, selected_slot=None):
+    """Confirm a pending request for its selected, suggested, or requested slot."""
+    centre_id = _object_id(request['centreId'], 'centreId')
+    farmer_id = _object_id(request['farmerId'], 'farmerId')
+    centre = get_collection('procurement_centres').find_one(
+        {'_id': centre_id, 'status': 'open'},
+    )
+    if not centre:
+        raise ValueError('Centre not found or not open')
+
+    existing_record = get_collection('procurement_records').find_one(
+        {'slotRequestId': request['_id']},
+    )
+    if existing_record:
+        return {
+            'status': 'confirmed',
+            'message': 'Slot request is already confirmed.',
+            'recordId': str(existing_record['_id']),
+        }
+
+    slot_reference = selected_slot or request.get('suggestedSlot') or request.get('requestedSlot')
+    if not slot_reference:
+        raise ValueError('No slot has been selected for this request')
+
+    slot = get_collection('booking_slots').find_one({
+        'centreId': centre_id,
+        'date': slot_reference['date'],
+        'time': slot_reference['time'],
+        'status': 'available',
+        '$expr': {'$lt': ['$booked', '$capacity']},
+    })
+    if not slot:
+        raise ValueError('Selected slot is no longer available')
+
+    try:
+        booking = book_slot(slot, request['farmerId'])
+    except BookingSystemError as error:
+        raise ValueError(str(error)) from error
+
+    _confirm_request(request['_id'], request, slot)
+    record_id = _create_procurement_record(request, request['_id'], centre, farmer_id)
+    recompute_centre_status(centre_id)
+    return {
+        'status': 'confirmed',
+        'slot': booking['slot'],
+        'recordId': str(record_id),
+    }
 
 
 def _confirm_request(request_id, request, slot):
