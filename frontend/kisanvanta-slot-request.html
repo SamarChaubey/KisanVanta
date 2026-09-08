@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KisanVanta — Request Procurement Slot</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --paper: #EEE9D8;
+    --paper-raised: #F6F2E4;
+    --ink: #2B2A1F;
+    --ink-soft: #5B5744;
+    --rule: #C8BFA0;
+    --rule-strong: #8C8264;
+    --turmeric: #B9750F;
+    --turmeric-deep: #8F5A0A;
+    --leaf: #52704A;
+    --leaf-deep: #3C5638;
+    --error: #A23E2E;
+    --stamp: #3C5638;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Public Sans', sans-serif;
+  }
+
+  #root { min-height: 100vh; }
+
+  .wrap {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .masthead {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 18px;
+    margin-bottom: 6px;
+  }
+
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 34px;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  .masthead .locale {
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: right;
+    line-height: 1.5;
+  }
+
+  .subline {
+    font-size: 14px;
+    color: var(--ink-soft);
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 20px;
+    margin-bottom: 32px;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 0;
+    border: 1px solid var(--rule-strong);
+    background: var(--paper-raised);
+  }
+
+  @media (max-width: 720px) {
+    .board { grid-template-columns: 1fr; }
+    .ledger { border-right: none !important; border-bottom: 1px solid var(--rule-strong); }
+  }
+
+  .ledger {
+    border-right: 1px solid var(--rule-strong);
+    padding: 28px 22px;
+  }
+
+  .ledger h2 {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+
+  .ledger .today {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 20px;
+  }
+
+  .centre-entry {
+    padding: 10px 0;
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+  }
+  .centre-entry:first-of-type { border-top: none; }
+  .centre-entry .name {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .centre-entry .note {
+    color: var(--ink-soft);
+    font-size: 12px;
+  }
+
+  .form-panel {
+    padding: 32px 36px;
+  }
+
+  .form-panel h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 19px;
+    margin: 0 0 24px;
+  }
+
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+
+  @media (max-width: 560px) {
+    .field-row { grid-template-columns: 1fr; }
+  }
+
+  .field {
+    margin-bottom: 20px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  .field input,
+  .field select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--rule-strong);
+    padding: 8px 2px;
+    font-family: 'Public Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .field input:focus,
+  .field select:focus {
+    border-bottom-color: var(--turmeric);
+  }
+
+  .field select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink-soft) 50%), linear-gradient(135deg, var(--ink-soft) 50%, transparent 50%);
+    background-position: calc(100% - 8px) 14px, calc(100% - 3px) 14px;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+  }
+
+  .field.has-error input,
+  .field.has-error select {
+    border-bottom-color: var(--error);
+  }
+
+  .field .err-msg {
+    color: var(--error);
+    font-size: 12px;
+    margin-top: 5px;
+  }
+
+  .field .hint {
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    margin-top: 5px;
+  }
+
+  .submit-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .submit-btn {
+    background: var(--leaf);
+    color: #F6F2E4;
+    border: none;
+    padding: 13px 26px;
+    font-size: 14.5px;
+    font-weight: 600;
+    font-family: 'Public Sans', sans-serif;
+    cursor: pointer;
+    letter-spacing: 0.2px;
+    transition: background 0.15s ease;
+  }
+
+  .submit-btn:hover { background: var(--leaf-deep); }
+  .submit-btn:active { transform: translateY(1px); }
+
+  .submit-note {
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .slip {
+    border: 1.5px solid var(--stamp);
+    background: var(--paper-raised);
+    padding: 26px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slip::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1px dashed var(--rule-strong);
+    pointer-events: none;
+  }
+
+  .slip-heading {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--stamp);
+    margin: 0 0 4px;
+  }
+
+  .slip-sub {
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .slip-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 0;
+    border-bottom: 1px dotted var(--rule);
+    font-size: 14.5px;
+  }
+  .slip-row:last-of-type { border-bottom: none; }
+
+  .slip-row .k { color: var(--ink-soft); }
+  .slip-row .v { font-weight: 600; }
+
+  .slip-again {
+    margin-top: 20px;
+    background: none;
+    border: 1px solid var(--rule-strong);
+    color: var(--ink);
+    padding: 9px 18px;
+    font-size: 13px;
+    font-family: 'Public Sans', sans-serif;
+    cursor: pointer;
+  }
+  .slip-again:hover { border-color: var(--ink); }
+
+  footer.foot {
+    margin-top: 28px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const CENTRES = [
+  { name: "Jaipur Wheat Procurement Centre", note: "Primary centre · wheat & barley" },
+  { name: "Sanganer Procurement Centre", note: "Mustard intake priority" },
+  { name: "Amer Procurement Centre", note: "General intake · all listed crops" },
+];
+
+const CROPS = ["Wheat", "Mustard", "Barley"];
+
+function buildTimeSlots() {
+  const slots = [];
+  let h = 6, m = 0;
+  while (h < 18 || (h === 18 && m === 0)) {
+    const hour12 = ((h + 11) % 12) + 1;
+    const ampm = h < 12 ? "AM" : "PM";
+    const mm = m === 0 ? "00" : "30";
+    slots.push(`${hour12}:${mm} ${ampm}`);
+    m += 30;
+    if (m === 60) { m = 0; h += 1; }
+  }
+  return slots;
+}
+
+const TIME_SLOTS = buildTimeSlots();
+
+function todayISO() {
+  const d = new Date();
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60000);
+  return local.toISOString().slice(0, 10);
+}
+
+function formatDateDisplay(iso) {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${d} ${months[m - 1]} ${y}`;
+}
+
+function Field({ label, error, hint, children }) {
+  return (
+    <div className={"field" + (error ? " has-error" : "")}>
+      <label>{label}</label>
+      {children}
+      {error ? <div className="err-msg">{error}</div> : (hint ? <div className="hint">{hint}</div> : null)}
+    </div>
+  );
+}
+
+function App() {
+  const [farmerName, setFarmerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [centre, setCentre] = useState("");
+  const [crop, setCrop] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [errors, setErrors] = useState({});
+  const [submitted, setSubmitted] = useState(null); // holds submitted request object
+  const [history, setHistory] = useState([]); // session-only stored requests
+
+  const minDate = useMemo(() => todayISO(), []);
+
+  function validate() {
+    const e = {};
+    if (!farmerName.trim()) e.farmerName = "Enter the farmer's name.";
+    if (!phone.trim()) {
+      e.phone = "Enter a phone number.";
+    } else if (!/^\d{10}$/.test(phone.replace(/\s+/g, ""))) {
+      e.phone = "Enter a valid 10-digit phone number.";
+    }
+    if (!centre) e.centre = "Choose a procurement centre.";
+    if (!crop) e.crop = "Choose a crop.";
+    if (!quantity) {
+      e.quantity = "Enter the quantity in bags.";
+    } else if (!/^\d+$/.test(quantity) || Number(quantity) <= 0) {
+      e.quantity = "Quantity must be a positive whole number.";
+    }
+    if (!date) {
+      e.date = "Choose a preferred date.";
+    } else if (date < minDate) {
+      e.date = "Date cannot be before today.";
+    }
+    if (!time) e.time = "Choose a preferred time slot.";
+    return e;
+  }
+
+  function handleSubmit(ev) {
+    ev.preventDefault();
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
+
+    const request = {
+      farmerName: farmerName.trim(),
+      phone: phone.trim(),
+      centre,
+      crop,
+      quantity: Number(quantity),
+      date,
+      time,
+      submittedAt: new Date().toISOString(),
+    };
+
+    // Store temporarily in this session (React state stands in for st.session_state)
+    setHistory(prev => [...prev, request]);
+    setSubmitted(request);
+  }
+
+  function handleNewRequest() {
+    setSubmitted(null);
+    setFarmerName("");
+    setPhone("");
+    setCentre("");
+    setCrop("");
+    setQuantity("");
+    setDate("");
+    setTime("");
+    setErrors({});
+  }
+
+  return (
+    <div className="wrap">
+      <div className="masthead">
+        <h1>KisanVanta</h1>
+        <div className="locale">Rajasthan Mandi Network<br/>Procurement Slot Request</div>
+      </div>
+      <div className="subline">Phase 1 — request a preferred slot to bring your crop for procurement. No booking is confirmed at this stage.</div>
+
+      <div className="board">
+        <div className="ledger">
+          <h2>Centres taking requests</h2>
+          <div className="today">Today — {formatDateDisplay(minDate)}</div>
+          {CENTRES.map(c => (
+            <div className="centre-entry" key={c.name}>
+              <span className="name">{c.name}</span>
+              <span className="note">{c.note}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="form-panel">
+          {submitted ? (
+            <div className="slip">
+              <div className="slip-heading">Slot Request Submitted</div>
+              <div className="slip-sub">{submitted.farmerName} · {submitted.centre}</div>
+              <div className="slip-row"><span className="k">Preferred</span><span className="v">{submitted.time}</span></div>
+              <div className="slip-row"><span className="k">Date</span><span className="v">{formatDateDisplay(submitted.date)}</span></div>
+              <div className="slip-row"><span className="k">Crop</span><span className="v">{submitted.crop}</span></div>
+              <div className="slip-row"><span className="k">Quantity</span><span className="v">{submitted.quantity} bags</span></div>
+              <button className="slip-again" onClick={handleNewRequest}>Submit another request</button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate>
+              <h2>Request a slot</h2>
+
+              <div className="field-row">
+                <Field label="Farmer name" error={errors.farmerName}>
+                  <input
+                    type="text"
+                    value={farmerName}
+                    onChange={ev => setFarmerName(ev.target.value)}
+                    placeholder="e.g. Ramesh Choudhary"
+                  />
+                </Field>
+
+                <Field label="Phone number" error={errors.phone}>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={ev => setPhone(ev.target.value)}
+                    placeholder="e.g. 98765 43210"
+                  />
+                </Field>
+              </div>
+
+              <div className="field-row">
+                <Field label="Procurement centre" error={errors.centre}>
+                  <select value={centre} onChange={ev => setCentre(ev.target.value)}>
+                    <option value="">Select a centre</option>
+                    {CENTRES.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </select>
+                </Field>
+
+                <Field label="Crop" error={errors.crop}>
+                  <select value={crop} onChange={ev => setCrop(ev.target.value)}>
+                    <option value="">Select a crop</option>
+                    {CROPS.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </Field>
+              </div>
+
+              <div className="field-row">
+                <Field label="Quantity in bags" error={errors.quantity}>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={quantity}
+                    onChange={ev => setQuantity(ev.target.value)}
+                    placeholder="e.g. 50"
+                  />
+                </Field>
+
+                <Field label="Preferred date" error={errors.date} hint={!errors.date ? "Today or later" : undefined}>
+                  <input
+                    type="date"
+                    min={minDate}
+                    value={date}
+                    onChange={ev => setDate(ev.target.value)}
+                  />
+                </Field>
+              </div>
+
+              <Field label="Preferred time" error={errors.time} hint={!errors.time ? "30-minute slots, 6:00 AM – 6:00 PM" : undefined}>
+                <select value={time} onChange={ev => setTime(ev.target.value)}>
+                  <option value="">Select a time slot</option>
+                  {TIME_SLOTS.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </Field>
+
+              <div className="submit-row">
+                <button type="submit" className="submit-btn">Request Slot</button>
+                <span className="submit-note">
+                  {history.length > 0 ? `${history.length} request${history.length > 1 ? "s" : ""} submitted this session` : "No scheduling or booking happens yet"}
+                </span>
+              </div>
+            </form>
+          )}
+        </div>
+      </div>
+
+      <footer className="foot">Phase 1 demo — requests are kept only for this browser session and are not saved anywhere.</footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
