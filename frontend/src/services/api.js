@@ -41,3 +41,19 @@ export function getRiskHistory(centreId) {
   const query = centreId ? `?centreId=${encodeURIComponent(centreId)}` : '';
   return request(`/centres/risk/history${query}`);
 }
+
+export function askAdminQuestion(question, language = 'en') {
+  return request('/admin/ask', {
+    method: 'POST',
+    body: JSON.stringify({ question, language }),
+  });
+}
+
+export function getSlotRequests(filters = {}) {
+  const query = new URLSearchParams(filters).toString();
+  return request(`/api/slot-requests${query ? `?${query}` : ''}`);
+}
+
+export function getCentres() {
+  return request('/centres/');
+}

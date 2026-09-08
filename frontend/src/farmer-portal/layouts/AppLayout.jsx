@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar.jsx";
 import TopBar from "../components/TopBar.jsx";
 import "../styles/AppLayout.css";
+import ChatbotButton from "../../components/ChatbotButton.jsx";
 
 export default function AppLayout({ t, language, setLanguage, alertCount, onLogout }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -25,6 +26,7 @@ export default function AppLayout({ t, language, setLanguage, alertCount, onLogo
         <main className="app-content">
           <Outlet />
         </main>
+        <ChatbotButton role="farmer" language={language} />
       </div>
     </div>
   );
