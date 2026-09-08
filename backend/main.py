@@ -13,7 +13,7 @@ app.add_middleware(
     allow_headers=['*'],
 )
 
-app.include_router(slot_requests.router, prefix='/slot-requests', tags=['slot requests'])
+app.include_router(slot_requests.router, prefix='/api/slot-requests', tags=['slot requests'])
 app.include_router(procurement.router, prefix='/procurement', tags=['procurement'])
 app.include_router(centres.router, prefix='/centres', tags=['centres'])
 
