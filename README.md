@@ -124,14 +124,38 @@ Do not upload `.env` to GitHub.
 pip install -r requirements.txt
 ```
 
-### 4. Start the backend
+### 4. Install and start the Node API
+
+The standalone slot request page sends requests to the Node API. The Node API
+uses the same root `.env`, MongoDB database, and collections as the Python
+backend and `seed_data.py`.
+
+```bash
+cd node-backend
+npm install
+npm start
+```
+
+The API listens on `http://localhost:3001`. Check the MongoDB connection at
+`http://localhost:3001/health`.
+
+### 5. Seed MongoDB
+
+From the repository root, after configuring `.env`:
+
+```bash
+cd backend
+python seed_data.py
+```
+
+### 6. Start the backend
 
 ```bash
 cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-### 5. Start the mock booking system
+### 7. Start the mock booking system
 
 Open another terminal:
 
@@ -140,7 +164,7 @@ cd mock_booking_system
 uvicorn main:app --reload --port 8001
 ```
 
-### 6. Start the frontend
+### 8. Start the frontend
 
 Open another terminal:
 
