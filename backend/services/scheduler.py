@@ -6,6 +6,8 @@ from bson.errors import InvalidId
 from database import get_collection
 
 from services.booking_service import BookingSystemError, book_slot
+from services.centre_status_service import recompute_centre_status
+DEFAULT_PRICE_PER_BAG = 2000
 
 
 def _minutes(time_value):
@@ -36,6 +38,63 @@ def _available_slots(centre_id, date):
     }))
 
 
+def _crop_price(centre, crop_name):
+    for crop in centre.get('crops', []):
+        if isinstance(crop, str):
+            if crop == crop_name:
+                return DEFAULT_PRICE_PER_BAG
+        elif crop.get('name') == crop_name:
+            return crop.get('pricePerBag', DEFAULT_PRICE_PER_BAG)
+    return DEFAULT_PRICE_PER_BAG
+
+
+def _next_queue_number(centre_id):
+    count = get_collection('procurement_records').count_documents({'centreId': centre_id})
+    return count + 1
+
+
+def _create_procurement_record(request, request_id, centre, farmer_id):
+    now = datetime.now(timezone.utc)
+    price = _crop_price(centre, request['crop'])
+    expected_value = price * request['quantity']
+    centre_id = centre['_id']
+
+    record_id = ObjectId()
+    get_collection('procurement_records').insert_one({
+        '_id': record_id,
+        'farmerId': farmer_id,
+        'slotRequestId': request_id,
+        'centreId': centre_id,
+        'crop': request['crop'],
+        'quantity': request['quantity'],
+        'queueNumber': _next_queue_number(centre_id),
+        'status': 'waiting',
+        'quality': {'status': 'pending', 'grade': ''},
+        'expectedValue': expected_value,
+        'actualValue': None,
+        'createdAt': now,
+        'updatedAt': now,
+    })
+
+    get_collection('financial_exposure').insert_one({
+        'farmerId': farmer_id,
+        'procurementId': record_id,
+        'quantity': request['quantity'],
+        'expectedPricePerBag': price,
+        'expectedValue': expected_value,
+        'delayDays': 0,
+        'scenarios': {
+            'acceptedValue': expected_value,
+            'downgradedValue': round(expected_value * 0.9, 2),
+            'rejectedValue': 0,
+        },
+        'estimatedExposure': round(expected_value * 0.1, 2),
+        'createdAt': now,
+    })
+
+    return record_id
+
+
 def schedule_slot(request, request_id):
     centre_id = _object_id(request['centreId'], 'centreId')
     farmer_id = _object_id(request['farmerId'], 'farmerId')
@@ -43,8 +102,14 @@ def schedule_slot(request, request_id):
     centre = centres.find_one({'_id': centre_id, 'status': 'open'})
     if not centre:
         raise ValueError('Centre not found or not open')
-    if request['crop'] not in centre.get('crops', []):
+
+    crop_names = [
+        crop if isinstance(crop, str) else crop.get('name')
+        for crop in centre.get('crops', [])
+    ]
+    if request['crop'] not in crop_names:
         raise ValueError('Crop is not accepted at the requested centre')
+
     farmer = get_collection('users').find_one({'_id': farmer_id, 'role': 'farmer'})
     if not farmer:
         raise ValueError('Farmer not found')
@@ -64,13 +129,10 @@ def schedule_slot(request, request_id):
             booking = book_slot(exact_slot, request['farmerId'])
         except BookingSystemError as error:
             return {'status': 'booking_failed', 'message': str(error)}
-        if booking.get('status') != 'confirmed':
-            return {
-                'status': 'booking_failed',
-                'message': 'The booking system did not confirm the requested slot.',
-            }
         _confirm_request(request_id, request, exact_slot)
-        return {'status': 'confirmed', 'slot': booking.get('slot', exact_slot)}
+        _create_procurement_record(request, request_id, centre, farmer_id)
+        recompute_centre_status(centre_id)
+        return {'status': 'confirmed', 'slot': booking['slot']}
 
     if not available_slots:
         return {
@@ -103,8 +165,14 @@ def schedule_slot(request, request_id):
 
 
 def accept_alternative(request, suggested_slot):
+    centre_id = _object_id(request['centreId'], 'centreId')
+    centre = get_collection('procurement_centres').find_one({'_id': centre_id})
+    if not centre:
+        return {'status': 'unavailable', 'message': 'Centre not found.'}
+
+    farmer_id = _object_id(request['farmerId'], 'farmerId')
     slot = get_collection('booking_slots').find_one({
-        'centreId': _object_id(request['centreId'], 'centreId'),
+        'centreId': centre_id,
         'date': suggested_slot['date'],
         'time': suggested_slot['time'],
         'status': 'available',
@@ -115,19 +183,13 @@ def accept_alternative(request, suggested_slot):
     try:
         booking = book_slot(slot, request['farmerId'])
     except BookingSystemError as error:
-        return {
-            'status': 'booking_failed',
-            'message': str(error),
-        }
+        return {'status': 'booking_failed', 'message': str(error)}
 
-    if booking.get('status') != 'confirmed':
-        return {
-            'status': 'booking_failed',
-            'message': 'The booking system did not confirm the suggested slot.',
-        }
     request_id = request['_id']
     _confirm_request(request_id, request, slot)
-    return {'status': 'confirmed', 'slot': booking.get('slot', suggested_slot)}
+    _create_procurement_record(request, request_id, centre, farmer_id)
+    recompute_centre_status(centre_id)
+    return {'status': 'confirmed', 'slot': booking['slot']}
 
 
 def _confirm_request(request_id, request, slot):

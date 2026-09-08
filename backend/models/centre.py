@@ -4,13 +4,18 @@ from pydantic import ConfigDict
 from pydantic import Field
 
 
+class CentreCrop(BaseModel):
+    name: str
+    pricePerBag: float
+
+
 class ProcurementCentre(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 
     id: ObjectId = Field(alias='_id')
     name: str
     location: dict[str, str]
-    crops: list[str]
+    crops: list[str | CentreCrop]
     dailyCapacity: int
     processingRate: int
     storageCapacity: int

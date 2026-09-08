@@ -17,6 +17,11 @@ class ProcurementQuality(BaseModel):
     grade: str
 
 
+class ProcurementQualityUpdate(BaseModel):
+    status: str
+    grade: Optional[str] = None
+
+
 class ProcurementRecord(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, populate_by_name=True)
 

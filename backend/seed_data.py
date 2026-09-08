@@ -4,7 +4,6 @@ from database import get_collection
 
 now = datetime.now(timezone.utc)
 
-# Pre-generate IDs for linking
 user_id = ObjectId()
 centre_id = ObjectId()
 slot_request_id = ObjectId()
@@ -26,7 +25,10 @@ def seed():
         "_id": centre_id,
         "name": "Jaipur Wheat Procurement Centre",
         "location": {"district": "Jaipur", "state": "Rajasthan"},
-        "crops": ["wheat", "mustard"],
+        "crops": [
+            {"name": "wheat", "pricePerBag": 2500},
+            {"name": "mustard", "pricePerBag": 3000}
+        ],
         "dailyCapacity": 5000,
         "processingRate": 80,
         "storageCapacity": 20000,

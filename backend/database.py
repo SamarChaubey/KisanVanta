@@ -14,6 +14,7 @@ COLLECTIONS = [
     "centre_status",
     "simulations",
     "financial_exposure",
+    "notifications",
 ]
 
 
@@ -31,7 +32,7 @@ def get_db():
     global _db
     if _db is None:
         client = get_client()
-        _db = client[DB_NAME]
+        _db = client[DB_NAME] # type: ignore
     return _db
 
 
